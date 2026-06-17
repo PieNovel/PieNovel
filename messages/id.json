@@ -1,0 +1,17 @@
+{
+  "common": {
+    "home": "Beranda",
+    "browse": "Jelajahi",
+    "search": "Cari",
+    "profile": "Profil",
+    "settings": "Pengaturan",
+    "signIn": "Masuk",
+    "signOut": "Keluar",
+    "readNow": "Baca Sekarang",
+    "previous": "Sebelumnya",
+    "next": "Selanjutnya",
+    "chapters": "Bab",
+    "notFound": "Halaman tidak ditemukan",
+    "goHome": "Kembali ke Beranda"
+  }
+}

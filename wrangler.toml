@@ -1,0 +1,23 @@
+name = "pie-novel"
+compatibility_date = "2026-06-17"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pie-novel-db"
+database_id = "26b4f158-ff0b-457b-811a-b5bd2450617e"
+
+[[kv_namespaces]]
+binding = "KV_CACHE"
+id = "44d26d522d1143ee83025780fb269015"
+
+[vars]
+CLOUDINARY_CLOUD_NAME = "dco4fkade"
+CLOUDINARY_UPLOAD_FOLDER = "pie-novel/covers"
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME = "dco4fkade"
+
+# Configure these as Cloudflare Pages secrets, not committed config:
+# - CLOUDINARY_API_KEY
+# - CLOUDINARY_API_SECRET
+# - ADMIN_UPLOAD_TOKEN

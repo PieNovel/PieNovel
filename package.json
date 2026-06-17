@@ -1,0 +1,38 @@
+{
+  "name": "pie-novel",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:preview": "npm run pages:build && wrangler pages dev .vercel/output/static",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@cloudflare/next-on-pages": "^1.13.13",
+    "@prisma/adapter-d1": "^6.10.1",
+    "@prisma/client": "^6.10.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "^15.3.3",
+    "next-intl": "^3.26.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.25.67",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250617.0",
+    "@types/node": "^22.15.32",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@tailwindcss/postcss": "^4.1.10",
+    "prisma": "^6.10.1",
+    "tailwindcss": "^4.1.10",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.20.5"
+  }
+}

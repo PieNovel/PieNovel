@@ -1,0 +1,17 @@
+{
+  "common": {
+    "home": "Home",
+    "browse": "Browse",
+    "search": "Search",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "readNow": "Read Now",
+    "previous": "Previous",
+    "next": "Next",
+    "chapters": "Chapters",
+    "notFound": "Page not found",
+    "goHome": "Go Home"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules
+.next
+.vercel
+.wrangler
+.env
+.env.local
+.env.*.local
+.dev.vars
+*.db
+*.db-journal
+dist
+out
