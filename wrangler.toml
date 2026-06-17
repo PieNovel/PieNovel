@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 name = "pienovel"
+=======
+name = "pie-novel"
+main = ".open-next/worker.js"
+>>>>>>> 7c5f38a (feat: switch to Cloudflare Workers with GitHub Actions deploy)
 compatibility_date = "2026-06-17"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".open-next"
 
 [[d1_databases]]
 binding = "DB"
@@ -12,12 +16,28 @@ database_id = "26b4f158-ff0b-457b-811a-b5bd2450617e"
 binding = "KV_CACHE"
 id = "44d26d522d1143ee83025780fb269015"
 
+[[durable_objects.bindings]]
+name = "DOQueueHandler"
+class_name = "DOQueueHandler"
+
+[[durable_objects.bindings]]
+name = "DOShardedTagCache"
+class_name = "DOShardedTagCache"
+
+[[durable_objects.bindings]]
+name = "BucketCachePurge"
+class_name = "BucketCachePurge"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["DOQueueHandler", "DOShardedTagCache", "BucketCachePurge"]
+
 [vars]
 CLOUDINARY_CLOUD_NAME = "dco4fkade"
 CLOUDINARY_UPLOAD_FOLDER = "pie-novel/covers"
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME = "dco4fkade"
 
-# Configure these as Cloudflare Pages secrets, not committed config:
+# Configure these as Cloudflare Workers secrets, not committed config:
 # - CLOUDINARY_API_KEY
 # - CLOUDINARY_API_SECRET
 # - ADMIN_UPLOAD_TOKEN

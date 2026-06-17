@@ -7,6 +7,7 @@
     "build": "next build",
     "pages:build": "npx @opennextjs/cloudflare build",
     "pages:preview": "npx @opennextjs/cloudflare preview",
+    "pages:deploy": "npx @opennextjs/cloudflare deploy",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
