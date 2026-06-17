@@ -1,7 +1,6 @@
 import { getCloudflareEnv } from "@/lib/cloudflare";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
-export const runtime = "edge";
 
 export async function POST(request: Request): Promise<Response> {
   const env = getCloudflareEnv();

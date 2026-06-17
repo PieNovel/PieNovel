@@ -1,7 +1,7 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export function getCloudflareEnv(): CloudflareEnv {
-  return getRequestContext().env as CloudflareEnv;
+  return getCloudflareContext().env as CloudflareEnv;
 }
 
 export function getKvCache(): KVNamespace {

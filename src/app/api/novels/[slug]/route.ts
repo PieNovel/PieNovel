@@ -1,6 +1,5 @@
 import { catalogNovels } from "@/lib/site/mock-novels";
 
-export const runtime = "edge";
 
 export async function GET(
   _request: Request,
