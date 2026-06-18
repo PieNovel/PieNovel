@@ -1,14 +1,18 @@
 import { getCloudflareEnv } from "@/lib/cloudflare";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
-
+import { requireAdmin } from "@/lib/auth/session";
 
 export async function POST(request: Request): Promise<Response> {
-  const env = getCloudflareEnv();
-  const authError = validateAdminUploadToken(request, env.ADMIN_UPLOAD_TOKEN);
-
-  if (authError) {
-    return authError;
+  try {
+    await requireAdmin();
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Unauthorized" },
+      { status: 401 },
+    );
   }
+
+  const env = getCloudflareEnv();
 
   try {
     const formData = await request.formData();
@@ -50,22 +54,4 @@ export async function POST(request: Request): Promise<Response> {
       { status: 400 },
     );
   }
-}
-
-function validateAdminUploadToken(
-  request: Request,
-  expectedToken?: string,
-): Response | null {
-  if (!expectedToken) {
-    return Response.json(
-      { error: "ADMIN_UPLOAD_TOKEN belum dikonfigurasi." },
-      { status: 503 },
-    );
-  }
-
-  if (request.headers.get("x-admin-upload-token") !== expectedToken) {
-    return Response.json({ error: "Tidak diizinkan." }, { status: 401 });
-  }
-
-  return null;
 }

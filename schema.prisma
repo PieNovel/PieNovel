@@ -50,6 +50,10 @@ model Novel {
   rank              Int       @default(0)
   totalChapters     Int       @default(0)
   ratingAverage     Float     @default(0.0)
+  genre             String    @default("")       // Genre: Action, Fantasy, Romance, etc.
+  type              String    @default("chinese") // Origin: chinese, korean, japanese, english
+  bannerUrl         String?   // Banner image URL for detail page
+  tags              String    @default("[]")     // JSON array of tags
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   chapters          Chapter[]
@@ -59,6 +63,8 @@ model Novel {
   reviews           Review[]
 
   @@index([language])
+  @@index([genre])
+  @@index([status])
 }
 
 model Chapter {
@@ -69,6 +75,7 @@ model Chapter {
   content   String   
   wordCount Int      @default(0)
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
   novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
   comments  Comment[]
   history   ReadingHistory[]

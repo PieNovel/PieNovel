@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getCloudflareEnv } from "@/lib/cloudflare";
+import { requireAdmin } from "@/lib/auth/session";
 import { uploadNovelCoverAndSave } from "@/lib/novels/cover";
 
 export type UploadNovelCoverState = {
@@ -16,11 +17,18 @@ export async function uploadNovelCoverAction(
   _previousState: UploadNovelCoverState,
   formData: FormData,
 ): Promise<UploadNovelCoverState> {
+  try {
+    await requireAdmin();
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unauthorized",
+    };
+  }
+
   const env = getCloudflareEnv();
 
   try {
-    validateAdminUploadToken(formData, env.ADMIN_UPLOAD_TOKEN);
-
     const locale = getRequiredTextField(formData, "locale");
     const novelId = getRequiredTextField(formData, "novelId");
     const cover = formData.get("cover");
@@ -63,19 +71,4 @@ function getRequiredTextField(formData: FormData, key: string): string {
   }
 
   return value.trim();
-}
-
-function validateAdminUploadToken(
-  formData: FormData,
-  expectedToken?: string,
-): void {
-  if (!expectedToken) {
-    throw new Error("ADMIN_UPLOAD_TOKEN belum dikonfigurasi.");
-  }
-
-  const token = formData.get("adminToken");
-
-  if (token !== expectedToken) {
-    throw new Error("Token admin tidak valid.");
-  }
 }

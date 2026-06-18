@@ -2,6 +2,7 @@
 
 import { ArrowRight, ChevronRight, Clock, Flame, Sparkles, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ReactElement } from "react";
 
@@ -11,8 +12,9 @@ import { NavigationTabs } from "@/components/site/navigation-tabs";
 import type { Tab } from "@/components/site/navigation-tabs";
 import { NovelCard } from "@/components/site/novel-card";
 import { ReadingHistoryCard } from "@/components/site/reading-history-card";
-import { SectionHeading } from "@/components/site/section-heading";
+import { SectionHeader } from "@/components/site/page-shell";
 import { catalogNovels, featuredNovels } from "@/lib/site/mock-novels";
+import { useTheme, THEME_STYLES } from "@/lib/site/theme-context";
 
 type HomePageProps = {
   locale: string;
@@ -41,65 +43,115 @@ const readingHistory = [
 export function HomePage({ locale }: HomePageProps): ReactElement {
   const [activePeriod, setActivePeriod] = useState("weekly");
   const [activeLatestTab, setActiveLatestTab] = useState("all");
+  const { theme } = useTheme();
+  const ts = THEME_STYLES[theme];
+  const router = useRouter();
+  const isDark = theme === "dark";
 
-  const trending = catalogNovels.slice(0, 5);
-  const newest = [...catalogNovels].reverse().slice(0, 6);
+  const trendingByPeriod: Record<string, typeof catalogNovels> = {
+    weekly: catalogNovels.slice(0, 5),
+    monthly: [catalogNovels[3], catalogNovels[0], catalogNovels[4], catalogNovels[1], catalogNovels[5]],
+    season: [catalogNovels[2], catalogNovels[3], catalogNovels[0], catalogNovels[4], catalogNovels[1]],
+    year: [catalogNovels[2], catalogNovels[0], catalogNovels[5], catalogNovels[3], catalogNovels[4]],
+    alltime: [catalogNovels[2], catalogNovels[0], catalogNovels[1], catalogNovels[3], catalogNovels[4]],
+  };
+
+  const newNovels = [...catalogNovels].slice(-6).reverse();
   const latestUpdates = catalogNovels.filter((n) => n.status === "ONGOING").slice(0, 4);
 
   return (
-    <main className="relative mx-auto grid max-w-7xl gap-12 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--primary)_10%,transparent),transparent_65%)]" />
+    <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-10 sm:space-y-14 relative">
+      {isDark && (
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.04) 0%, transparent 60%)",
+            zIndex: 0,
+          }}
+        />
+      )}
 
       <FeaturedHero locale={locale} slides={featuredNovels} />
 
       <section>
-        <SectionHeading
-          action={
-            <Link
-              className="hidden items-center gap-1 text-sm text-[var(--muted-foreground)] transition hover:text-[var(--primary)] sm:inline-flex"
-              href={`/${locale}/library`}
-            >
-              View Library
-              <ChevronRight className="size-4" />
-            </Link>
-          }
-          eyebrow="Continue Reading"
+        <SectionHeader
           icon={<Clock className="size-3" />}
+          label="Continue Reading"
           title="Pick Up Where You Left Off"
+          action="View Library"
+          actionHref={`/${locale}/library`}
         />
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {readingHistory.map((item) => (
-            <ReadingHistoryCard key={item.novelSlug} locale={locale} {...item} />
+            <ReadingHistoryCard key={item.novelSlug} {...item} locale={locale} />
           ))}
         </div>
       </section>
 
       <section>
-        <SectionHeading
-          action={
-            <Link
-              className="hidden items-center gap-1 text-sm text-[var(--muted-foreground)] transition hover:text-[var(--primary)] sm:inline-flex"
-              href={`/${locale}/popular`}
-            >
-              See Popular
-              <ChevronRight className="size-4" />
-            </Link>
-          }
-          eyebrow="Hot Right Now"
-          icon={<Flame className="size-3" />}
-          title="Trending"
-        />
+        <div className="flex items-end justify-between mb-5">
+          <div className="flex items-start gap-3">
+            {isDark && (
+              <div
+                className="flex-shrink-0 mt-0.5"
+                style={{
+                  width: "3px",
+                  height: "36px",
+                  borderRadius: "2px",
+                  background: "linear-gradient(180deg, #10b981, rgba(16,185,129,0.2))",
+                  boxShadow: "0 0 8px rgba(16,185,129,0.4)",
+                }}
+              />
+            )}
+            <div>
+              <div
+                className="flex items-center gap-1.5 mb-1.5"
+                style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  fontFamily: "'Inter', sans-serif",
+                  color: ts.sectionLabel,
+                  textShadow: isDark ? "0 0 12px rgba(16,185,129,0.4)" : "none",
+                }}
+              >
+                <Flame className="size-3" />Hot Right Now
+              </div>
+              <h2
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontWeight: 800,
+                  fontSize: "clamp(1.25rem, 4vw, 1.45rem)",
+                  color: ts.sectionTitle,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Trending
+              </h2>
+            </div>
+          </div>
+          <button
+            onClick={() => router.push(`/${locale}/popular`)}
+            className="flex items-center gap-1 transition-colors hover:opacity-80"
+            style={{ fontSize: "0.75rem", fontFamily: "'Inter', sans-serif", color: ts.subtext }}
+          >
+            See Popular<ChevronRight className="size-3.5" />
+          </button>
+        </div>
 
-        <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1 mb-5 overflow-x-auto pb-1 scrollbar-none" style={{ fontFamily: "'Inter', sans-serif" }}>
           {trendingPeriods.map((p) => (
             <button
               key={p.id}
               onClick={() => setActivePeriod(p.id)}
-              className="shrink-0 rounded-md border px-3 py-2 text-xs font-bold transition-all"
+              className="rounded-lg px-3.5 py-1.5 transition-all flex-shrink-0"
               style={{
-                borderColor: activePeriod === p.id ? "color-mix(in_srgb, var(--primary) 35%, transparent)" : "transparent",
-                background: activePeriod === p.id ? "color-mix(in_srgb, var(--primary) 12%, transparent)" : "transparent",
-                color: activePeriod === p.id ? "var(--primary)" : "var(--muted-foreground)",
+                fontSize: "0.75rem",
+                fontWeight: activePeriod === p.id ? 600 : 400,
+                background: activePeriod === p.id ? "rgba(16,185,129,0.12)" : "transparent",
+                color: activePeriod === p.id ? "#10b981" : ts.subtext,
+                border: `1px solid ${activePeriod === p.id ? "rgba(16,185,129,0.3)" : "transparent"}`,
               }}
             >
               {p.label}
@@ -107,44 +159,80 @@ export function HomePage({ locale }: HomePageProps): ReactElement {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-          {trending.map((novel, index) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {trendingByPeriod[activePeriod].map((novel, index) => (
             <NovelCard key={`${activePeriod}-${novel.slug}`} compact locale={locale} novel={novel} rank={index + 1} />
           ))}
         </div>
       </section>
 
-      <AdSlot />
+      <AdSlot label="728×90" />
 
       <section>
-        <SectionHeading
-          action={
-            <Link
-              className="hidden items-center gap-1 text-sm text-[var(--muted-foreground)] transition hover:text-[var(--primary)] sm:inline-flex"
-              href={`/${locale}/browse`}
-            >
-              Browse all
-              <ChevronRight className="size-4" />
-            </Link>
-          }
-          eyebrow="Just Added"
-          icon={<Sparkles className="size-3" />}
-          title="New on Pie Novel"
-        />
+        <div className="flex items-end justify-between mb-5">
+          <div className="flex items-start gap-3">
+            {isDark && (
+              <div
+                className="flex-shrink-0 mt-0.5"
+                style={{
+                  width: "3px",
+                  height: "36px",
+                  borderRadius: "2px",
+                  background: "linear-gradient(180deg, #10b981, rgba(16,185,129,0.2))",
+                  boxShadow: "0 0 8px rgba(16,185,129,0.4)",
+                }}
+              />
+            )}
+            <div>
+              <div
+                className="flex items-center gap-1.5 mb-1.5"
+                style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  fontFamily: "'Inter', sans-serif",
+                  color: ts.sectionLabel,
+                  textShadow: isDark ? "0 0 12px rgba(16,185,129,0.4)" : "none",
+                }}
+              >
+                <Sparkles className="size-3" />Just Added
+              </div>
+              <h2
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontWeight: 800,
+                  fontSize: "clamp(1.25rem, 4vw, 1.45rem)",
+                  color: ts.sectionTitle,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                New on Pie Novel
+              </h2>
+            </div>
+          </div>
+          <Link
+            href={`/${locale}/browse`}
+            className="flex items-center gap-1 transition-colors hover:opacity-80"
+            style={{ fontSize: "0.75rem", fontFamily: "'Inter', sans-serif", color: ts.subtext }}
+          >
+            Browse all<ChevronRight className="size-3.5" />
+          </Link>
+        </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {newest.map((novel) => (
-            <NovelCard compact key={novel.slug} locale={locale} novel={novel} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {newNovels.map((novel) => (
+            <NovelCard key={novel.slug} compact locale={locale} novel={novel} />
           ))}
         </div>
       </section>
 
-      <AdSlot />
+      <AdSlot label="728×90" />
 
       <section>
-        <SectionHeading
-          eyebrow="Fresh Chapters"
+        <SectionHeader
           icon={<TrendingUp className="size-3" />}
+          label="Fresh Chapters"
           title="Latest Updates"
         />
         <NavigationTabs
@@ -153,22 +241,28 @@ export function HomePage({ locale }: HomePageProps): ReactElement {
           onTabChange={setActiveLatestTab}
           className="mb-5"
         />
-        <div className="grid gap-3">
+        <div className="space-y-2">
           {latestUpdates.map((novel) => (
             <NovelCard key={novel.slug} locale={locale} novel={novel} />
           ))}
         </div>
 
-        <AdSlot className="mb-2 mt-8" />
+        <AdSlot className="mt-8 mb-2" label="728×90" />
 
         <div className="mt-6 flex justify-center">
           <Link
-            className="inline-flex h-11 items-center gap-2 rounded-md border px-5 text-sm font-bold text-[var(--primary)] transition-all"
             href={`/${locale}/latest`}
+            className="flex items-center gap-2 rounded-xl px-6 py-3 border transition-all group"
             style={{
-              borderColor: "color-mix(in_srgb, var(--primary) 28%, transparent)",
-              background: "color-mix(in_srgb, var(--primary) 8%, transparent)",
+              fontFamily: "'Inter', sans-serif",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: ts.sectionLabel,
+              borderColor: "rgba(16,185,129,0.25)",
+              background: "rgba(16,185,129,0.06)",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(16,185,129,0.12)"; e.currentTarget.style.borderColor = "rgba(16,185,129,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(16,185,129,0.06)"; e.currentTarget.style.borderColor = "rgba(16,185,129,0.25)"; }}
           >
             More Updates
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />

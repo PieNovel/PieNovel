@@ -6,6 +6,8 @@ interface CloudflareEnv {
   CLOUDINARY_API_SECRET: string;
   CLOUDINARY_UPLOAD_FOLDER?: string;
   ADMIN_UPLOAD_TOKEN?: string;
+  ADMIN_EMAIL?: string;
+  ADMIN_PASSWORD_HASH?: string;
 }
 
 declare namespace NodeJS {

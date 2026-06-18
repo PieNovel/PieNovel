@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
 export interface AuthUser {
@@ -46,12 +46,13 @@ export interface NotificationSettings {
 interface AuthContextValue {
   user: AuthUser | null;
   isLoggedIn: boolean;
+  isLoading: boolean;
   favorites: FavoriteEntry[];
   history: HistoryEntry[];
   readingSettings: ReadingSettings;
   notifSettings: NotificationSettings;
-  login: () => void;
-  logout: () => void;
+  fetchSession: () => Promise<void>;
+  logout: () => Promise<void>;
   toggleFavorite: (novelId: number) => void;
   isFavorite: (novelId: number) => boolean;
   addHistory: (entry: Omit<HistoryEntry, "readAt">) => void;
@@ -102,12 +103,13 @@ const DEFAULT_NOTIF: NotificationSettings = {
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   isLoggedIn: false,
+  isLoading: true,
   favorites: [],
   history: [],
   readingSettings: DEFAULT_READING,
   notifSettings: DEFAULT_NOTIF,
-  login: () => {},
-  logout: () => {},
+  fetchSession: async () => {},
+  logout: async () => {},
   toggleFavorite: () => {},
   isFavorite: () => false,
   addHistory: () => {},
@@ -117,14 +119,52 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(MOCK_USER);
-  const [favorites, setFavorites] = useState<FavoriteEntry[]>(MOCK_FAVORITES);
-  const [history, setHistory] = useState<HistoryEntry[]>(MOCK_HISTORY);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [favorites, setFavorites] = useState<FavoriteEntry[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [readingSettings, setReadingSettings] = useState<ReadingSettings>(DEFAULT_READING);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(DEFAULT_NOTIF);
 
-  const login = useCallback(() => setUser(MOCK_USER), []);
-  const logout = useCallback(() => setUser(null), []);
+  const fetchSession = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/session");
+      const data: { session?: { userId: string; role: string; email: string } } = await res.json();
+
+      if (data.session) {
+        setUser({
+          id: data.session.userId,
+          username: data.session.email.split("@")[0],
+          email: data.session.email,
+          avatar: "",
+          role: data.session.role as "user" | "admin",
+          joinedAt: "",
+          bio: "",
+          totalRead: 0,
+          totalChapters: 0,
+        });
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSession();
+  }, [fetchSession]);
+
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    setUser(null);
+  }, []);
 
   const toggleFavorite = useCallback((novelId: number) => {
     setFavorites((prev) => {
@@ -152,8 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{
-      user, isLoggedIn: !!user, favorites, history, readingSettings, notifSettings,
-      login, logout, toggleFavorite, isFavorite, addHistory, clearHistory,
+      user, isLoggedIn: !!user, isLoading, favorites, history, readingSettings, notifSettings,
+      fetchSession, logout, toggleFavorite, isFavorite, addHistory, clearHistory,
       updateReadingSettings, updateNotifSettings,
     }}>
       {children}

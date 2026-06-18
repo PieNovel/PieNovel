@@ -2,11 +2,10 @@
 
 import { ArrowLeft, ArrowRight, BookOpen, ChevronLeft, Settings } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import type { ReactElement, ReactNode } from "react";
+import { useEffect, useState } from "react";
+import type { ReactElement } from "react";
 
 import { AdSlot } from "@/components/site/ad-slot";
-import { catalogNovels } from "@/lib/site/mock-novels";
 import { useAuth } from "@/lib/site/auth-context";
 
 type ReaderPageProps = {
@@ -15,25 +14,39 @@ type ReaderPageProps = {
   chapterNumber: string;
 };
 
+type ChapterData = {
+  novel: { title: string; slug: string };
+  chapter: { id: string; number: number; title: string; content: string; wordCount: number };
+  prevChapter: number | null;
+  nextChapter: number | null;
+  totalChapters: number;
+};
+
 export function ReaderPage({ locale, slug, chapterNumber }: ReaderPageProps): ReactElement {
-  const novel = catalogNovels.find((n) => n.slug === slug);
-  const chapter = parseInt(chapterNumber, 10);
   const { isLoggedIn, readingSettings, updateReadingSettings } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
+  const [data, setData] = useState<ChapterData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!novel) {
-    return (
-      <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center gap-4 px-4">
-        <BookOpen className="size-16 opacity-20" style={{ color: "var(--muted-foreground)" }} />
-        <p className="font-serif text-xl font-bold" style={{ color: "var(--foreground)" }}>Novel not found</p>
-        <Link href={`/${locale}/browse`} className="rounded-xl px-6 py-2.5 text-sm font-semibold text-white" style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
-          Browse Novels
-        </Link>
-      </div>
-    );
-  }
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
 
-  const content = generateMockContent(novel.title, chapter);
+    fetch(`/api/novels/${slug}/chapters/${chapterNumber}`)
+      .then((res) => {
+        if (!res.ok) return res.json().then((d: unknown) => Promise.reject(new Error((d as { error?: string }).error || "Not found")));
+        return res.json();
+      })
+      .then((d: unknown) => {
+        setData(d as ChapterData);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [slug, chapterNumber]);
 
   const fontClass =
     readingSettings.fontFamily === "georgia"
@@ -49,6 +62,31 @@ export function ReaderPage({ locale, slug, chapterNumber }: ReaderPageProps): Re
         ? "max-w-4xl"
         : "max-w-2xl";
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-56px)] items-center justify-center">
+        <span className="inline-block size-6 animate-spin rounded-full border-2 border-[var(--muted-foreground)] border-t-[var(--primary)]" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center gap-4 px-4">
+        <BookOpen className="size-16 opacity-20" style={{ color: "var(--muted-foreground)" }} />
+        <p className="font-serif text-xl font-bold" style={{ color: "var(--foreground)" }}>
+          {error === "Chapter not found" ? "Chapter not found" : "Novel not found"}
+        </p>
+        <Link href={`/${locale}/browse`} className="rounded-xl px-6 py-2.5 text-sm font-semibold text-white" style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
+          Browse Novels
+        </Link>
+      </div>
+    );
+  }
+
+  const { novel, chapter } = data;
+  const content = chapter.content.split("\n").filter((p) => p.trim());
+
   return (
     <div className="min-h-[calc(100vh-56px)]" style={{ background: "var(--background)" }}>
       {/* Top bar */}
@@ -62,7 +100,7 @@ export function ReaderPage({ locale, slug, chapterNumber }: ReaderPageProps): Re
             <span className="hidden sm:inline">{novel.title}</span>
           </Link>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium" style={{ color: "var(--foreground)" }}>Ch. {chapter}</span>
+            <span className="text-sm font-medium" style={{ color: "var(--foreground)" }}>Ch. {chapter.number}</span>
             <button onClick={() => setShowSettings(!showSettings)} className="rounded-lg p-2 transition-colors" style={{ color: showSettings ? "var(--primary)" : "var(--muted-foreground)" }}>
               <Settings className="size-4" />
             </button>
@@ -107,13 +145,13 @@ export function ReaderPage({ locale, slug, chapterNumber }: ReaderPageProps): Re
       {/* Content */}
       <div className={`mx-auto px-4 py-12 ${widthClass}`}>
         <h1 className="mb-2 text-center font-serif text-2xl font-extrabold" style={{ color: "var(--foreground)" }}>
-          Ch. {chapter}: Chapter {chapter}
+          {chapter.title}
         </h1>
         <p className="mb-8 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>{novel.title}</p>
 
         <div className={`${fontClass} space-y-4`} style={{ fontSize: `${readingSettings.fontSize}px`, lineHeight: readingSettings.lineHeight, color: "var(--foreground)" }}>
           {content.map((para, i) => (
-            <p key={i}>{para}</p>
+            <p key={i} className="leading-relaxed">{para}</p>
           ))}
         </div>
 
@@ -121,14 +159,14 @@ export function ReaderPage({ locale, slug, chapterNumber }: ReaderPageProps): Re
 
         {/* Navigation */}
         <div className="flex items-center justify-between border-t pt-6" style={{ borderColor: "var(--border)" }}>
-          {chapter > 1 ? (
-            <Link href={`/${locale}/read/${slug}/${chapter - 1}`} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors" style={{ color: "var(--muted-foreground)", border: "1px solid var(--border)" }}>
+          {data.prevChapter ? (
+            <Link href={`/${locale}/read/${slug}/${data.prevChapter}`} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors" style={{ color: "var(--muted-foreground)", border: "1px solid var(--border)" }}>
               <ArrowLeft className="size-4" />
               Previous
             </Link>
           ) : <div />}
-          {chapter < novel.chapters ? (
-            <Link href={`/${locale}/read/${slug}/${chapter + 1}`} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
+          {data.nextChapter ? (
+            <Link href={`/${locale}/read/${slug}/${data.nextChapter}`} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
               Next Chapter
               <ArrowRight className="size-4" />
             </Link>
@@ -137,15 +175,4 @@ export function ReaderPage({ locale, slug, chapterNumber }: ReaderPageProps): Re
       </div>
     </div>
   );
-}
-
-function generateMockContent(title: string, chapter: number): string[] {
-  return [
-    `The wind howled through the ancient corridors of the forgotten temple, carrying with it whispers of a power long thought lost to the ages. Chapter ${chapter} of ${title} opens with our protagonist standing at the threshold of destiny, unaware that the choices made in this moment would echo through eternity.`,
-    `The air crackled with barely contained energy as they stepped forward. Each footfall on the weathered stone floor sent tremors through the walls, as if the very structure of reality was responding to their presence. The glyphs etched into the pillars began to glow — first faintly, then with increasing intensity, painting the darkness in shades of emerald and gold.`,
-    `"You shouldn't be here," a voice echoed from somewhere beyond the veil of shadow. It wasn't a threat, but rather a warning — one born of ancient wisdom and the burden of countless cycles of destruction and rebirth. The speaker emerged from the darkness, their form shifting between corporeal and ethereal, like smoke caught between two worlds.`,
-    `Our hero steadied themselves, drawing upon reserves of strength they didn't know they possessed. The journey to this point had been long — filled with betrayal, loss, and the gradual awakening of abilities that defied the natural order. But here, in this sacred space between worlds, all paths converged.`,
-    `The battle that followed was unlike anything the realm had witnessed in millennia. Powers that had slumbered since the founding of the first dynasty erupted forth in a cataclysm of light and shadow. The very fabric of space distorted as opposing forces collided, each seeking to reshape reality according to their vision.`,
-    `When the dust settled and the echoes faded, the world had changed. Not in the dramatic fashion of cataclysmic destruction, but in the subtle way that follows true transformation — a shifting of foundations, a realignment of destiny's threads. And at the center of it all stood a figure forever altered by the truth they had uncovered.`,
-  ];
 }

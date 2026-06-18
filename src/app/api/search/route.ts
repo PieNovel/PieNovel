@@ -1,39 +1,78 @@
-import { catalogNovels } from "@/lib/site/mock-novels";
-
+import { createPrismaClient } from "@/lib/prisma";
+import { mapPrismaNovelsToSiteNovels } from "@/lib/site/novel-mapper";
 
 export async function GET(request: Request): Promise<Response> {
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get("q") ?? "";
-  const genre = searchParams.get("genre");
-  const status = searchParams.get("status");
+  try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q") ?? "";
+    const genre = searchParams.get("genre");
+    const status = searchParams.get("status");
 
-  let results = [...catalogNovels];
+    const prisma = createPrismaClient();
 
-  if (q) {
-    const query = q.toLowerCase();
-    results = results.filter(
-      (n) =>
-        n.title.toLowerCase().includes(query) ||
-        n.author.toLowerCase().includes(query) ||
-        n.tags.some((t) => t.toLowerCase().includes(query)),
+    const orConditions: any[] = [];
+
+    if (q) {
+      orConditions.push(
+        { title: { contains: q, mode: "insensitive" } },
+        { author: { contains: q, mode: "insensitive" } },
+        { tags: { contains: `"${q.toLowerCase()}"`, mode: "insensitive" } },
+      );
+    }
+
+    if (genre && genre !== "All") {
+      orConditions.push(
+        { genre: { equals: genre, mode: "insensitive" } },
+        { tags: { contains: `"${genre.toLowerCase()}"`, mode: "insensitive" } },
+      );
+    }
+
+    const whereConditions: any = {};
+
+    if (orConditions.length > 0) {
+      whereConditions.OR = orConditions;
+    }
+
+    if (status) {
+      whereConditions.status = status.toUpperCase();
+    }
+
+    const prismaNovels = await prisma.novel.findMany({
+      where: whereConditions,
+      orderBy: { ratingAverage: "desc" },
+      take: 50,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        author: true,
+        genre: true,
+        type: true,
+        description: true,
+        coverUrl: true,
+        bannerUrl: true,
+        tags: true,
+        status: true,
+        views: true,
+        ratingAverage: true,
+        totalChapters: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    const results = mapPrismaNovelsToSiteNovels(prismaNovels);
+
+    return Response.json({
+      results,
+      total: results.length,
+      query: q,
+    });
+  } catch (error) {
+    console.error("Error searching novels:", error);
+    return Response.json(
+      { error: "Failed to search novels" },
+      { status: 500 },
     );
   }
-
-  if (genre && genre !== "All") {
-    results = results.filter(
-      (n) =>
-        n.genre.toLowerCase() === genre.toLowerCase() ||
-        n.tags.some((t) => t.toLowerCase() === genre.toLowerCase()),
-    );
-  }
-
-  if (status) {
-    results = results.filter((n) => n.status === status.toUpperCase());
-  }
-
-  return Response.json({
-    results,
-    total: results.length,
-    query: q,
-  });
 }

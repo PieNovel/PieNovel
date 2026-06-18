@@ -11,7 +11,7 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html className="dark" lang="en">
+    <html lang="en">
       <body>
         <ThemeProvider>
           <AuthProvider>

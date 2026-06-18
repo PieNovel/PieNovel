@@ -2,12 +2,18 @@
   "name": "pie-novel",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "pages:build": "npx @opennextjs/cloudflare build",
     "pages:preview": "npx @opennextjs/cloudflare preview",
-    "prisma:generate": "prisma generate"
+    "deploy": "npm run pages:build && npx wrangler deploy",
+    "prisma:generate": "prisma generate",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.11",
@@ -33,6 +39,7 @@
     "esbuild": "^0.28.1",
     "prisma": "^6.10.1",
     "tailwindcss": "^4.1.10",
+    "tsx": "^4.22.4",
     "typescript": "^5.8.3",
     "wrangler": "^4.20.5"
   }

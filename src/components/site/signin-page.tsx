@@ -14,14 +14,14 @@ type SignInPageProps = {
 
 export function SignInPage({ locale }: SignInPageProps): ReactElement {
   const router = useRouter();
-  const { login } = useAuth();
+  const { fetchSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!email || !password) {
       setError("Please fill in all fields.");
@@ -29,11 +29,28 @@ export function SignInPage({ locale }: SignInPageProps): ReactElement {
     }
     setError("");
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      login();
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data: { error?: string; user?: { email: string; role: string } } = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      await fetchSession();
       router.push(`/${locale}`);
-    }, 1200);
+    } catch {
+      setError("An error occurred. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (

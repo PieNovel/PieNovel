@@ -1,7 +1,11 @@
 name = "pienovel"
 compatibility_date = "2026-06-17"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".open-next"
+main = ".open-next/worker.js"
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
@@ -17,7 +21,7 @@ CLOUDINARY_CLOUD_NAME = "dco4fkade"
 CLOUDINARY_UPLOAD_FOLDER = "pie-novel/covers"
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME = "dco4fkade"
 
-# Configure these as Cloudflare Pages secrets, not committed config:
+# Configure these as Cloudflare secrets, not committed config:
 # - CLOUDINARY_API_KEY
 # - CLOUDINARY_API_SECRET
 # - ADMIN_UPLOAD_TOKEN
